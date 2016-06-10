@@ -46,7 +46,14 @@ echo "Unmounting all snaps..."
 echo
 (
     set -x
-    umount /var/lib/snapd/snaps/*.snap
+    if which lsof &>/dev/null; then
+        lsof -t -x f +D /snap |while read p; do kill $p; seq 30 |while read; do sleep 1; kill -0 $p || break; done; done
+    fi
+    umount /var/lib/snapd/snaps/*.snap || {
+        set +x
+        which lsof &>/dev/null || echo "Install 'lsof', and this script could kill programs that prevent unmounting snap files."
+        exit 1
+    }
 )
 
 echo
